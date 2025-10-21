@@ -48,6 +48,14 @@ data/processed/
 
 # Results
 results/
+
+# 但保留实验对比结果
+!comparison_*.png
+!experiment_summary.csv
+!signals_*.csv
+!*_results.json
+
+# 忽略其他图片和JSON
 *.png
 *.jpg
 *.json
