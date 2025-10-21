@@ -3,7 +3,7 @@
 所有具体Agent的父类，提供LLM调用的基础功能
 """
 
-import openai
+from openai import OpenAI
 import time
 import json
 from typing import Dict, List, Optional
@@ -13,25 +13,27 @@ from config.config import config
 
 class BaseAgent(ABC):
     """Agent基类"""
-    
+
     def __init__(self, role_name: str, api_key: str = None):
         """
         初始化Agent
-        
+
         Args:
             role_name: Agent角色名称
             api_key: OpenAI API密钥
         """
         self.role_name = role_name
         self.api_key = api_key or config.OPENAI_API_KEY
-        openai.api_key = self.api_key
-        
+
+        # 初始化OpenAI客户端（新版API）
+        self.client = OpenAI(api_key=self.api_key)
+
         # 设置LLM参数
         self.model = config.OPENAI_MODEL
         self.temperature = config.AGENT_TEMPERATURE
         self.max_tokens = config.OPENAI_MAX_TOKENS
         self.max_retries = config.MAX_RETRIES
-        
+
         # 对话历史
         self.conversation_history = []
     
@@ -83,40 +85,47 @@ class BaseAgent(ABC):
         
         for attempt in range(self.max_retries):
             try:
-                response = openai.ChatCompletion.create(
+                # 使用新版OpenAI API
+                response = self.client.chat.completions.create(
                     model=self.model,
                     messages=messages,
                     temperature=self.temperature,
                     max_tokens=self.max_tokens
                 )
-                
+
                 assistant_message = response.choices[0].message.content
-                
+
                 # 保存到对话历史
                 self.conversation_history.append({"role": "user", "content": user_message})
                 self.conversation_history.append({"role": "assistant", "content": assistant_message})
-                
+
                 return assistant_message
-                
-            except openai.error.RateLimitError:
-                wait_time = (attempt + 1) * 5
-                print(f"⏳ API速率限制，等待 {wait_time} 秒后重试...")
-                time.sleep(wait_time)
-                
-            except openai.error.APIError as e:
-                print(f"❌ API错误: {str(e)}")
-                if attempt < self.max_retries - 1:
-                    time.sleep(2)
-                else:
-                    raise
-                    
+
             except Exception as e:
-                print(f"❌ 调用LLM时出错: {str(e)}")
-                if attempt < self.max_retries - 1:
-                    time.sleep(2)
+                error_str = str(e)
+
+                # 处理速率限制错误
+                if "rate_limit" in error_str.lower() or "429" in error_str:
+                    wait_time = (attempt + 1) * 5
+                    print(f"⏳ API速率限制，等待 {wait_time} 秒后重试...")
+                    time.sleep(wait_time)
+
+                # 处理其他API错误
+                elif "api" in error_str.lower():
+                    print(f"❌ API错误: {error_str}")
+                    if attempt < self.max_retries - 1:
+                        time.sleep(2)
+                    else:
+                        raise
+
+                # 处理其他异常
                 else:
-                    raise
-        
+                    print(f"❌ 调用LLM时出错: {error_str}")
+                    if attempt < self.max_retries - 1:
+                        time.sleep(2)
+                    else:
+                        raise
+
         raise Exception(f"调用LLM失败，已重试 {self.max_retries} 次")
     
     def analyze(self, data: Dict) -> Dict:
