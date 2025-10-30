@@ -25,7 +25,7 @@ class Config:
     
     # ==================== API配置 ====================
     # OpenAI API (用于LLM调用)
-    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "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")
+    OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "your-openai-api-key-here")  # 请设置环境变量或直接替换此处
     OPENAI_MODEL = "gpt-4"  # 或 "gpt-3.5-turbo"
     OPENAI_TEMPERATURE = 0.7
     OPENAI_MAX_TOKENS = 2000
