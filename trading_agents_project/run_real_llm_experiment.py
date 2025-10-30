@@ -198,7 +198,7 @@ def call_gpt_for_prediction(system_prompt, user_message, client, max_retries=3):
     for attempt in range(max_retries):
         try:
             response = client.chat.completions.create(
-                model="gpt-4",  # 使用GPT-4以获得更好的预测
+                model="gpt-3.5-turbo",  # 使用GPT-3.5-turbo（更便宜！）如需更好效果可改为gpt-4
                 messages=[
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_message}
@@ -568,8 +568,8 @@ def main():
     print("真实LLM交易预测实验")
     print("="*80)
     print("\n⚠️  注意：这个实验会使用真实的OpenAI API调用")
-    print("每次预测都会调用GPT-4模型")
-    print("预计API费用: $2-5 (取决于交易日数量)")
+    print("每次预测都会调用GPT-3.5-turbo模型（更便宜！）")
+    print("预计API费用: $0.20-0.40 (如使用GPT-4则为$4-7)")
     print("="*80)
 
     # 确认API密钥
