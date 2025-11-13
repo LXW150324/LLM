@@ -275,13 +275,16 @@ def create_prompt_image(agent_data, output_path):
     light_gray = (240, 240, 240)
     dark_gray = (60, 60, 60)
 
-    # 尝试加载中文字体，如果失败则使用默认字体
+    # 使用支持中文的字体
     try:
-        title_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 32)
-        subtitle_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 18)
-        text_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf", 14)
-        meta_font = ImageFont.truetype("/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 14)
-    except:
+        # 优先使用文泉驿正黑字体（支持中文）
+        chinese_font = "/usr/share/fonts/truetype/wqy/wqy-zenhei.ttc"
+        title_font = ImageFont.truetype(chinese_font, 28)
+        subtitle_font = ImageFont.truetype(chinese_font, 16)
+        text_font = ImageFont.truetype(chinese_font, 13)
+        meta_font = ImageFont.truetype(chinese_font, 13)
+    except Exception as e:
+        print(f"⚠ 警告: 无法加载中文字体: {e}")
         # 如果找不到字体，使用默认字体
         title_font = ImageFont.load_default()
         subtitle_font = ImageFont.load_default()
