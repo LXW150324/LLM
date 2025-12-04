@@ -146,11 +146,11 @@ ROE: 147.5%
 
 
 def create_playground_screenshot(conversation_data, output_path):
-    """创建OpenAI Playground风格的对话界面截图"""
+    """创建OpenAI Playground风格的对话界面截图（高清版）"""
 
-    # 图片尺寸
-    width = 1400
-    margin = 40
+    # 图片尺寸（提高分辨率）
+    width = 2000
+    margin = 60
 
     # 颜色定义（OpenAI Playground风格）
     bg_color = (255, 255, 255)  # 白色背景
@@ -161,35 +161,35 @@ def create_playground_screenshot(conversation_data, output_path):
     label_color = (107, 114, 128)  # 中灰色标签
     border_color = (229, 231, 235)  # 边框颜色
 
-    # 加载字体
+    # 加载字体（增大字体以提高清晰度）
     try:
         japanese_font = "/usr/share/fonts/truetype/custom/NotoSansJP.ttf"
-        title_font = ImageFont.truetype(japanese_font, 18)
-        label_font = ImageFont.truetype(japanese_font, 14)
-        text_font = ImageFont.truetype(japanese_font, 13)
-        code_font = ImageFont.truetype(japanese_font, 12)
+        title_font = ImageFont.truetype(japanese_font, 26)  # 18 -> 26
+        label_font = ImageFont.truetype(japanese_font, 20)  # 14 -> 20
+        text_font = ImageFont.truetype(japanese_font, 18)   # 13 -> 18
+        code_font = ImageFont.truetype(japanese_font, 17)   # 12 -> 17
     except:
         title_font = ImageFont.load_default()
         label_font = ImageFont.load_default()
         text_font = ImageFont.load_default()
         code_font = ImageFont.load_default()
 
-    # 计算每个消息块的高度
+    # 计算每个消息块的高度（增加行间距）
     def calculate_text_height(text, font, max_width):
         lines = []
         for paragraph in text.split('\n'):
-            if len(paragraph) <= 100:
+            if len(paragraph) <= 130:  # 100 -> 130（更宽的行）
                 lines.append(paragraph)
             else:
-                lines.extend(textwrap.wrap(paragraph, width=100))
-        return len(lines) * 22 + 40
+                lines.extend(textwrap.wrap(paragraph, width=130))
+        return len(lines) * 30 + 60  # 22 -> 30, 40 -> 60（更大的间距）
 
     system_height = calculate_text_height(conversation_data['system_prompt'], text_font, width - 2*margin - 40)
     user_height = calculate_text_height(conversation_data['user_input'], text_font, width - 2*margin - 40)
     assistant_height = calculate_text_height(conversation_data['assistant_response'], code_font, width - 2*margin - 40)
 
     # 总高度
-    total_height = 80 + system_height + user_height + assistant_height + 100
+    total_height = 100 + system_height + user_height + assistant_height + 150
 
     # 创建图片
     img = Image.new('RGB', (width, total_height), bg_color)
@@ -199,53 +199,53 @@ def create_playground_screenshot(conversation_data, output_path):
 
     # 绘制标题
     draw.text((margin, current_y), conversation_data['agent_name'], fill=text_color, font=title_font)
-    current_y += 50
+    current_y += 70  # 50 -> 70
 
-    # 绘制System消息块
+    # 绘制System消息块（增加边框宽度）
     draw.rectangle([(margin, current_y), (width - margin, current_y + system_height)],
-                   fill=system_bg, outline=border_color, width=1)
-    draw.text((margin + 20, current_y + 15), "SYSTEM", fill=label_color, font=label_font)
+                   fill=system_bg, outline=border_color, width=2)  # width=1 -> 2
+    draw.text((margin + 30, current_y + 20), "SYSTEM", fill=label_color, font=label_font)
 
-    # 绘制system提示词内容
-    text_y = current_y + 45
+    # 绘制system提示词内容（增加行间距）
+    text_y = current_y + 60  # 45 -> 60
     for line in conversation_data['system_prompt'].split('\n'):
         if line.strip():
-            wrapped_lines = textwrap.wrap(line, width=100) if len(line) > 100 else [line]
+            wrapped_lines = textwrap.wrap(line, width=130) if len(line) > 130 else [line]
             for wrapped_line in wrapped_lines:
-                draw.text((margin + 20, text_y), wrapped_line, fill=text_color, font=text_font)
-                text_y += 22
+                draw.text((margin + 30, text_y), wrapped_line, fill=text_color, font=text_font)
+                text_y += 30  # 22 -> 30
 
-    current_y += system_height + 20
+    current_y += system_height + 30  # 20 -> 30
 
     # 绘制User消息块
     draw.rectangle([(margin, current_y), (width - margin, current_y + user_height)],
-                   fill=user_bg, outline=border_color, width=1)
-    draw.text((margin + 20, current_y + 15), "USER", fill=label_color, font=label_font)
+                   fill=user_bg, outline=border_color, width=2)
+    draw.text((margin + 30, current_y + 20), "USER", fill=label_color, font=label_font)
 
     # 绘制user输入内容
-    text_y = current_y + 45
+    text_y = current_y + 60
     for line in conversation_data['user_input'].split('\n'):
         if line.strip():
-            wrapped_lines = textwrap.wrap(line, width=100) if len(line) > 100 else [line]
+            wrapped_lines = textwrap.wrap(line, width=130) if len(line) > 130 else [line]
             for wrapped_line in wrapped_lines:
-                draw.text((margin + 20, text_y), wrapped_line, fill=text_color, font=text_font)
-                text_y += 22
+                draw.text((margin + 30, text_y), wrapped_line, fill=text_color, font=text_font)
+                text_y += 30
 
-    current_y += user_height + 20
+    current_y += user_height + 30
 
     # 绘制Assistant消息块
     draw.rectangle([(margin, current_y), (width - margin, current_y + assistant_height)],
-                   fill=assistant_bg, outline=border_color, width=1)
-    draw.text((margin + 20, current_y + 15), "ASSISTANT", fill=label_color, font=label_font)
+                   fill=assistant_bg, outline=border_color, width=2)
+    draw.text((margin + 30, current_y + 20), "ASSISTANT", fill=label_color, font=label_font)
 
     # 绘制assistant响应内容（JSON格式）
-    text_y = current_y + 45
+    text_y = current_y + 60
     for line in conversation_data['assistant_response'].split('\n'):
-        draw.text((margin + 20, text_y), line, fill=text_color, font=code_font)
-        text_y += 22
+        draw.text((margin + 30, text_y), line, fill=text_color, font=code_font)
+        text_y += 30
 
-    # 保存图片
-    img.save(output_path, 'PNG', quality=95)
+    # 保存图片（使用最高质量）
+    img.save(output_path, 'PNG', quality=100, optimize=False, dpi=(300, 300))
     print(f"✓ 已生成: {output_path}")
 
 
