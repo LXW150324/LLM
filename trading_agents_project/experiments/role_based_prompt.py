@@ -239,25 +239,49 @@ class RoleBasedPromptExperiment:
         }
     
     def run_experiment(self, start_date: str, end_date: str) -> Dict:
-        """运行完整实验"""
+        """运行完整实验（支持训练/测试划分）"""
         print(f"\n{'='*60}")
         print(f"开始运行 Role-Based Prompt 实验")
         print(f"股票: {self.symbol}")
         print(f"时间: {start_date} 到 {end_date}")
+
+        if config.USE_TRAIN_TEST_SPLIT:
+            print(f"🔥 使用严格训练/测试划分模式:")
+            print(f"   训练集: {start_date} 到 {config.TRAIN_END_DATE}")
+            print(f"   测试集: {config.TEST_START_DATE} 到 {config.TEST_END_DATE}")
+            print(f"   ⚠️  只在测试集上评估性能！")
         print(f"{'='*60}\n")
-        
-        # 收集数据
+
+        # 收集完整数据（包含训练和测试期）
         all_data = self.collect_data(start_date, end_date)
         price_data = all_data['price_data']
-        
-        # 获取交易日期
-        trading_dates = price_data.index.strftime('%Y-%m-%d').tolist()
-        
+
+        # 获取所有交易日期
+        all_trading_dates = price_data.index.strftime('%Y-%m-%d').tolist()
+
+        # 划分训练集和测试集日期
+        if config.USE_TRAIN_TEST_SPLIT:
+            train_dates = [d for d in all_trading_dates if d <= config.TRAIN_END_DATE]
+            test_dates = [d for d in all_trading_dates
+                         if config.TEST_START_DATE <= d <= config.TEST_END_DATE]
+
+            print(f"📊 数据集统计:")
+            print(f"   总交易日: {len(all_trading_dates)}")
+            print(f"   训练集: {len(train_dates)} 天")
+            print(f"   测试集: {len(test_dates)} 天")
+            print(f"   测试集占比: {len(test_dates)/len(all_trading_dates)*100:.1f}%\n")
+
+            # 只分析测试集数据
+            dates_to_analyze = test_dates
+        else:
+            # 传统模式：分析所有数据
+            dates_to_analyze = all_trading_dates
+
         # 运行每日分析
         daily_results = []
-        
-        with ProgressTracker(len(trading_dates), "分析进度") as tracker:
-            for date in trading_dates:
+
+        with ProgressTracker(len(dates_to_analyze), "分析进度") as tracker:
+            for date in dates_to_analyze:
                 try:
                     result = self.run_daily_analysis(date, all_data)
                     daily_results.append(result)
@@ -305,14 +329,22 @@ class RoleBasedPromptExperiment:
             'symbol': self.symbol,
             'start_date': start_date,
             'end_date': end_date,
+            'use_train_test_split': config.USE_TRAIN_TEST_SPLIT,
+            'train_end_date': config.TRAIN_END_DATE if config.USE_TRAIN_TEST_SPLIT else None,
+            'test_start_date': config.TEST_START_DATE if config.USE_TRAIN_TEST_SPLIT else None,
+            'test_end_date': config.TEST_END_DATE if config.USE_TRAIN_TEST_SPLIT else None,
+            'num_test_days': len(results_df) if config.USE_TRAIN_TEST_SPLIT else None,
             'metrics': metrics,
             'daily_results': results_df.to_dict('records')
         }
-        
-        print_results_table(metrics, "Role-Based Prompt 实验结果")
-        
+
+        if config.USE_TRAIN_TEST_SPLIT:
+            print_results_table(metrics, f"Role-Based Prompt 实验结果 (仅测试集: {config.TEST_START_DATE} 到 {config.TEST_END_DATE})")
+        else:
+            print_results_table(metrics, "Role-Based Prompt 实验结果 (全部数据)")
+
         save_results(experiment_results, 'role_based_prompt', config.RESULTS_DIR)
-        
+
         return experiment_results
 
 

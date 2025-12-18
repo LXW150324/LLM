@@ -447,9 +447,13 @@ def evaluate_strategy(
         'win_rate': TradingMetrics.calculate_win_rate(strategy_returns),
         'profit_factor': TradingMetrics.calculate_profit_factor(strategy_returns),
         
-        # 预测指标
+        # 预测指标（修正：第t天的信号预测第t+1天的涨跌）
+        # 将信号向前偏移一天，与收益计算保持一致
+        shifted_signals = np.zeros_like(signals)
+        shifted_signals[1:] = signals[:-1]  # 第t天的决策用于预测第t+1天
+
         'direction_accuracy': TradingMetrics.calculate_accuracy(
-            (signals > 0).astype(int),
+            (shifted_signals > 0).astype(int),
             (returns > 0).astype(int)
         ),
         
